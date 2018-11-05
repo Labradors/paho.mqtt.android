@@ -26,6 +26,7 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.os.Build;
+import android.os.Handler;
 import android.os.PowerManager;
 import android.os.PowerManager.WakeLock;
 import android.util.Log;
@@ -50,6 +51,7 @@ class AlarmPingSender implements MqttPingSender {
 	private AlarmPingSender that;
 	private PendingIntent pendingIntent;
 	private volatile boolean hasStarted = false;
+	private Handler mHandler = new Handler();
 
 	public AlarmPingSender(MqttService service) {
 		if (service == null) {
@@ -112,20 +114,27 @@ class AlarmPingSender implements MqttPingSender {
 			// In SDK 23 and above, dosing will prevent setExact, setExactAndAllowWhileIdle will force
 			// the device to run this task whilst dosing.
 			Log.d(TAG, "Alarm scheule using setExactAndAllowWhileIdle, next: " + delayInMilliseconds);
-			alarmManager.setExactAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, nextAlarmInMilliseconds,
-					pendingIntent);
+			if (alarmManager != null) {
+				alarmManager.setExactAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, nextAlarmInMilliseconds,
+                        pendingIntent);
+			}
 		} else if (Build.VERSION.SDK_INT >= 19) {
 			Log.d(TAG, "Alarm scheule using setExact, delay: " + delayInMilliseconds);
-			alarmManager.setExact(AlarmManager.RTC_WAKEUP, nextAlarmInMilliseconds,
-					pendingIntent);
+			if (alarmManager != null) {
+				alarmManager.setExact(AlarmManager.RTC_WAKEUP, nextAlarmInMilliseconds,
+                        pendingIntent);
+			}
 		} else {
-			alarmManager.set(AlarmManager.RTC_WAKEUP, nextAlarmInMilliseconds,
-					pendingIntent);
+			if (alarmManager != null) {
+				alarmManager.set(AlarmManager.RTC_WAKEUP, nextAlarmInMilliseconds,
+                        pendingIntent);
+			}
 		}
 	}
 
 	/*
 	 * This class sends PingReq packet to MQTT broker
+	 * todo Fix ANR Broadcast of Intent { act=MqttService.pingSender.123460022233326 flg=0x114 (has extras) }
 	 */
 	class AlarmReceiver extends BroadcastReceiver {
 		private WakeLock wakelock;
@@ -145,9 +154,17 @@ class AlarmPingSender implements MqttPingSender {
 
 			PowerManager pm = (PowerManager) service
 					.getSystemService(Service.POWER_SERVICE);
-			wakelock = pm.newWakeLock(PowerManager.PARTIAL_WAKE_LOCK, wakeLockTag);
+			if (pm != null) {
+				wakelock = pm.newWakeLock(PowerManager.PARTIAL_WAKE_LOCK, wakeLockTag);
+			}
 			wakelock.acquire();
-
+			Runnable runnable = new Runnable() {
+				@Override
+				public void run() {
+					wakelock.release();
+				}
+			};
+			mHandler.postDelayed(runnable,8000);
 			// Assign new callback to token to execute code after PingResq
 			// arrives. Get another wakelock even receiver already has one,
 			// release it until ping response returns.

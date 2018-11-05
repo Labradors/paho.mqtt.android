@@ -777,7 +777,9 @@ public class MqttService extends Service implements MqttTraceHandler {
 		if (Build.VERSION.SDK_INT < 14 /**Build.VERSION_CODES.ICE_CREAM_SANDWICH**/) {
 			// Support the old system for background data preferences
 			ConnectivityManager cm = (ConnectivityManager) getSystemService(CONNECTIVITY_SERVICE);
-			backgroundDataEnabled = cm.getBackgroundDataSetting();
+			if (cm!=null) {
+                backgroundDataEnabled = cm.getBackgroundDataSetting();
+            }
 			if (backgroundDataPreferenceMonitor == null) {
 				backgroundDataPreferenceMonitor = new BackgroundDataPreferenceReceiver();
 				registerReceiver(
@@ -838,8 +840,11 @@ public class MqttService extends Service implements MqttTraceHandler {
 	 */
 	public boolean isOnline() {
 		ConnectivityManager cm = (ConnectivityManager) getSystemService(CONNECTIVITY_SERVICE);
-		NetworkInfo networkInfo = cm.getActiveNetworkInfo();
-      //noinspection RedundantIfStatement
+        NetworkInfo networkInfo = null;
+        if (cm != null) {
+            networkInfo = cm.getActiveNetworkInfo();
+        }
+        //noinspection RedundantIfStatement
       if (networkInfo != null
               && networkInfo.isAvailable()
               && networkInfo.isConnected()
@@ -870,18 +875,20 @@ public class MqttService extends Service implements MqttTraceHandler {
 		public void onReceive(Context context, Intent intent) {
 			ConnectivityManager cm = (ConnectivityManager) getSystemService(CONNECTIVITY_SERVICE);
 			traceDebug(TAG,"Reconnect since BroadcastReceiver.");
-			if (cm.getBackgroundDataSetting()) {
-				if (!backgroundDataEnabled) {
-					backgroundDataEnabled = true;
-					// we have the Internet connection - have another try at
-					// connecting
-					reconnect();
-				}
-			} else {
-				backgroundDataEnabled = false;
-				notifyClientsOffline();
-			}
-		}
+            if (cm != null) {
+                if (cm.getBackgroundDataSetting()) {
+                    if (!backgroundDataEnabled) {
+                        backgroundDataEnabled = true;
+                        // we have the Internet connection - have another try at
+                        // connecting
+                        reconnect();
+                    }
+                } else {
+                    backgroundDataEnabled = false;
+                    notifyClientsOffline();
+                }
+            }
+        }
 	}
 
   /**
