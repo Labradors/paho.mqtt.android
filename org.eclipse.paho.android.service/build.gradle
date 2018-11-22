@@ -3,12 +3,10 @@ apply plugin: 'maven-publish'
 
 android {
     compileSdkVersion rootProject.ext.compileSdkVersion
-    buildToolsVersion rootProject.ext.buildToolsVersion
 
     defaultConfig {
         minSdkVersion 9
         targetSdkVersion 24
-
         testApplicationId "org.eclipse.paho.android.service.test"
     }
     buildTypes {
@@ -25,6 +23,7 @@ android {
     lintOptions {
         abortOnError false
     }
+    buildToolsVersion '28.0.2'
 }
 
 repositories {
@@ -89,34 +88,6 @@ task("generateJavaDocJar", type: Jar, dependsOn: (rootProject.ext.serviceVersion
     classifier = 'javadoc'
 }
 
-publishing {
-    publications {
-        paho(MavenPublication) {
-            groupId 'org.eclipse.paho'
-            artifact generateSourcesJar
-            artifact generateLibraryJar
-            artifact generateJavaDocJar
-            artifact "$buildDir/outputs/aar/" + rootProject.ext.serviceArchivesBaseName + "-" + rootProject.ext.serviceVersion + ".aar"
-        }
-    }
-    repositories {
-        if (project.hasProperty('eclipseRepoUsername')) {
-            maven {
-                name 'eclipse'
-                url 'https://repo.eclipse.org/content/repositories/paho-' + (rootProject.ext.serviceVersion.endsWith('-SNAPSHOT') ? 'snapshots/' : 'releases/')
-                credentials {
-                    username eclipseRepoUsername
-                    password eclipseRepoPassword
-                }
-            }
-        } else {
-            maven {
-                url "$buildDir/repo"
-            }
-        }
-    }
-}
-
 
 task debug << {
     configurations.compile.each { println it}
@@ -132,3 +103,4 @@ assemble.doLast {
 clean.doFirst {
     delete 'libs'
 }
+apply from: 'bintrayUpload.gradle'

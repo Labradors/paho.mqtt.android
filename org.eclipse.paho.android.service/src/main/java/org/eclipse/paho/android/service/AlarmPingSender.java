@@ -142,7 +142,7 @@ class AlarmPingSender implements MqttPingSender {
 				+ that.comms.getClient().getClientId();
 
 		@Override
-        @SuppressLint("Wakelock")
+		@SuppressLint({"Wakelock", "WakelockTimeout"})
 		public void onReceive(Context context, Intent intent) {
 			// According to the docs, "Alarm Manager holds a CPU wake lock as
 			// long as the alarm receiver's onReceive() method is executing.
@@ -158,6 +158,7 @@ class AlarmPingSender implements MqttPingSender {
 				wakelock = pm.newWakeLock(PowerManager.PARTIAL_WAKE_LOCK, wakeLockTag);
 			}
 			wakelock.acquire();
+			wakelock.setReferenceCounted(false);
 			Runnable runnable = new Runnable() {
 				@Override
 				public void run() {

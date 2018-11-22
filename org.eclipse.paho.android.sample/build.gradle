@@ -2,7 +2,6 @@ apply plugin: 'com.android.application'
 
 android {
     compileSdkVersion rootProject.ext.compileSdkVersion
-    buildToolsVersion rootProject.ext.buildToolsVersion
 
     defaultConfig {
         applicationId rootProject.ext.sampleArchivesBaseName
@@ -23,6 +22,7 @@ android {
     dexOptions {
         preDexLibraries = false
     }
+    buildToolsVersion '28.0.2'
 }
 
 repositories {

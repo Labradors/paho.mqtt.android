@@ -1,0 +1,75 @@
+apply plugin: 'com.github.dcendents.android-maven'
+apply plugin: 'com.jfrog.bintray'
+version = "1.1.3"
+
+def siteUrl = 'https://gitlab.com/BosCattle/AppUpdate-Android'
+def gitUrl = 'https://gitlab.com/BosCattle/AppUpdate-Android.git'
+group = "work.labradors.android"
+install {
+  repositories.mavenInstaller {
+    // This generates POM.xml with proper parameters
+    pom {
+      project {
+        packaging 'aar'
+        // Add your description here
+        name 'mqtt-base'
+        url siteUrl
+        // Set your license
+        licenses {
+          license {
+            name 'The Apache Software License, Version 2.0'
+            url 'http://www.apache.org/licenses/LICENSE-2.0.txt'
+          }
+        }
+        developers {
+          developer {
+            id 'Labradors'     //填写的一些基本信息
+            name 'Labradors'
+            email 'Labradors'
+          }
+        }
+        scm {
+          connection gitUrl
+          developerConnection gitUrl
+          url siteUrl
+        }
+      }
+    }
+  }
+}
+task sourcesJar(type: Jar) {
+  from android.sourceSets.main.java.srcDirs
+  classifier = 'sources'
+}
+task javadoc(type: Javadoc) {
+  source = android.sourceSets.main.java.srcDirs
+  classpath += project.files(android.getBootClasspath().join(File.pathSeparator))
+}
+
+task javadocJar(type: Jar, dependsOn: javadoc) {
+  classifier = 'javadoc'
+  from javadoc.destinationDir
+}
+artifacts {
+//  archives javadocJar
+  archives sourcesJar
+}
+bintray {
+  user = "labradors"
+  key = "7212a7188da2229f11edadf070432d777c417476"
+  configurations = ['archives']
+  pkg {
+    repo = "smart"
+    name = "mqtt-base"   //发布到JCenter上的项目名字
+    websiteUrl = siteUrl
+    vcsUrl = gitUrl
+    licenses = ["Apache-2.0"]
+    publish = true
+  }
+}
+javadoc {
+  options{
+    encoding "UTF-8"
+    charSet 'UTF-8'
+  }
+}
